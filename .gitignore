@@ -9,6 +9,6 @@ core
 dcc.purify
 purify.log
 dcc
-.cproject/
-.project/
+.cproject
+.project
 .settings/
