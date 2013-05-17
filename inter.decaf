@@ -41,4 +41,5 @@ interface z {
 	int  dos(t1 p1, t2 p2, t3 p3, t4 p4);
 	bool tres(int salida);
 	c mala(t2 p2);
+	t tara(s);
 }

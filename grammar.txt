@@ -24,17 +24,16 @@ Type : int
 
 InterfaceDecl : 'interface' ident '{' PrototypeList '}'
 
-PrototypeList : PrototypeList Prototype
-			  | Prototype
+PrototypeList : Prototype PrototypeList
 			  | EPSILON
 
-Prototype : Type ident ( Formals ) ; | EPSILON
+Prototype : Type ident ( ParamsList ) ; | EPSILON
 
-Formals : Formals ',' Variable
-				|	Variable
-				| EPSILON
+ParamsList : Variable ',' ParamsList
+		   | Variable
+		   | EPSILON
 
-FunctionDecl : Type ident ( Formals ) StmtBlock 
+FunctionDecl : Type ident ( ParamsList ) StmtBlock 
 
 StmtBlock : '{' VariableDecl∗ Stmt∗ '}'
 
