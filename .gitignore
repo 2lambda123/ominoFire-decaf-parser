@@ -1,0 +1,14 @@
+y.output
+*.o
+lex.yy.c
+dpp.yy.c
+y.tab.c
+y.tab.h
+*.core
+core
+dcc.purify
+purify.log
+dcc
+.cproject/
+.project/
+.settings/
