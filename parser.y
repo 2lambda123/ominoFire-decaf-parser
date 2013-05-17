@@ -95,6 +95,9 @@ void yyerror(char *msg); // standard error-handling routine
 %type <prototypeList> PrototypeList
 %type <varDecl> Param
 %type <paramsList> ParamsList
+%type <paramsList> AParam
+
+%type <prototypeList> Q
 
 
 %%
@@ -111,8 +114,8 @@ Program   :    DeclList            {
                                        * it once you have other uses of @n*/
                                       Program *program = new Program($1);
                                       // if no errors, advance to next phase
-                                      if (ReportError::NumErrors() == 0) 
-                                          program->Print(0);
+                                      if(ReportError::NumErrors() == 0) 
+                                        program->Print(0);
                                     }
           ;
 
@@ -145,29 +148,35 @@ Type      :    T_Int          { $$ = Type::intType; }
           |    Type T_Dims    { $$ = new ArrayType(@1, $1); }
           ;
 
-InterfaceDecl : T_Interface T_Identifier '{' PrototypeList '}'  {
+InterfaceDecl : T_Interface T_Identifier '{' PrototypeList '}' {
                                               Identifier* interfaceName = new Identifier(@2, $2);
-                                              $$ = new InterfaceDecl(interfaceName, $4 );
+                                              $$ = new InterfaceDecl( interfaceName, $4 );
                                             }
-
-PrototypeList : PrototypeList Prototype     { ($$ = $1)->Append($2); }
-              | Prototype                   { ($$ = new List<Decl*>)->Append($1); }
-              | { $$ = new List<Decl*>(); }
               ;
 
-Prototype : Type T_Identifier '(' ParamsList ')' ';'  {
+PrototypeList : Q             { $$ = $1; }
+              ;
+
+Q : Prototype Q               { ($$ = $2)->InsertAt($1, 0); }
+  |                           { $$ = new List< Decl* >(); }
+  ;
+
+
+Prototype : Type T_Identifier '(' ParamsList ')' ';' {
                                               Identifier *funcName = new Identifier(@2, $2);
                                               $$ = new FnDecl(funcName, $1, $4);
                                             }
           ;
 
+ParamsList : Param AParam                   { ($$ = $2)->InsertAt($1, 0); }
+          | AParam                          { $$ = $1; }
+          ;
 
-ParamsList : ParamsList ',' Param        { ($$ = $1)->Append( $3 ); }
-           | Param                       { ($$ = new List<VarDecl*>())->Append($1); }
-           | { $$ = new List<VarDecl*>(); }
-           ;
+AParam : ',' Param AParam                   { ($$ = $3)->InsertAt($2, 0); }
+       |                                    { $$ = new List< VarDecl* >(); } 
+       ;
 
-Param : Variable                 { $$ = $1; }
+Param : Variable              { $$ = $1; }
       ;
 
 

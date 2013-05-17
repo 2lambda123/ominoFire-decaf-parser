@@ -22,7 +22,11 @@ Type : int
 
 
 
-InterfaceDecl : 'interface' ident '{' Prototype '}'
+InterfaceDecl : 'interface' ident '{' PrototypeList '}'
+
+PrototypeList : PrototypeList Prototype
+			  | Prototype
+			  | EPSILON
 
 Prototype : Type ident ( Formals ) ; | EPSILON
 
