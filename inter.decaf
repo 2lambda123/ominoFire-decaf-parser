@@ -12,6 +12,28 @@ int [] olakase;
 int[][] moco;
 int[][][][][][] eminem;
 
-interface hola {
+interface hola 
+{
+	mitio aosfp(asf asef);
+}
+
+
+interface mundo 
+{
+	int val(s s);
+	int val2(int s, string b);
+}
+
+interface x
+{
 	
 }
+
+
+interface y
+{
+	func z();
+	bool corinne(string name);
+}
+
+

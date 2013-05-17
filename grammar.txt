@@ -8,16 +8,37 @@ Decl : VariableDecl
      | ClassDecl 
      | InterfaceDecl
 
-VariableDecl ::= Variable ;
-Variable ::= Type ident
-Type ::= int | double | bool | string | ident | Type [ ]
-FunctionDecl ::= Type ident ( Formals ) StmtBlock | void ident ( Formals ) StmtBlock
-Formals ::= Variable+ , |
-ClassDecl ::= class ident < extends ident> <implements ident+ ,> { Field∗ }
+VariableDecl : Variable ;
+
+Variable : Type ident
+
+Type : int 
+		 | 'double'
+		 | 'bool'
+		 | 'string'
+		 | 'void'
+		 | ident 
+		 | Type[]
+
+
+
+InterfaceDecl : 'interface' ident '{' Prototype '}'
+
+Prototype : Type ident ( Formals ) ; | EPSILON
+
+Formals : Formals ',' Variable
+				|	Variable
+				| EPSILON
+
+FunctionDecl : Type ident ( Formals ) StmtBlock 
+
+StmtBlock : '{' VariableDecl∗ Stmt∗ '}'
+
+
+
+ClassDecl ::= class ident <extends ident> <implements ident+ ,> { Field∗ }
 Field ::= VariableDecl | FunctionDecl
-InterfaceDecl ::= interface ident { Prototype∗ }
-Prototype ::= Type ident ( Formals ) ; | void ident ( Formals ) ;
-StmtBlock ::= { VariableDecl∗ Stmt∗ }
+
 Stmt ::= <Expr>; | IfStmt | WhileStmt | ForStmt | BreakStmt | ReturnStmt | PrintStmt | StmtBlock
 IfStmt ::= if ( Expr ) Stmt <else Stmt>
 WhileStmt ::= while ( Expr ) Stmt
@@ -30,26 +51,3 @@ LValue ::= ident | Expr . ident | Expr [ Expr ]
 Call ::= ident ( Actuals ) | Expr . ident ( Actuals )
 Actuals ::= Expr+ , |
 Constant ::= intConstant | doubleConstant | boolConstant | stringConstant | null
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

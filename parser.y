@@ -39,16 +39,19 @@ void yyerror(char *msg); // standard error-handling routine
  *      attributes to your non-terminal symbols.
  */
 %union {
-    int integerConstant;
-    bool boolConstant;
-    char *stringConstant;
-    double doubleConstant;
-    char identifier[MaxIdentLen+1]; // +1 for terminating null
-    Decl *decl;
-    FnDecl *fnDecl;
-    List<Decl*> *declList;
-    Type* varType;
-    VarDecl* varDecl;
+    int            integerConstant;
+    bool           boolConstant;
+    char           *stringConstant;
+    double         doubleConstant;
+    char           identifier[MaxIdentLen+1]; // +1 for terminating null
+    Decl*          decl;
+    FnDecl*        fnDecl;
+    List< Decl* >    *declList;
+    Type*          varType;
+    VarDecl*       varDecl;
+    InterfaceDecl   *interfaceDecl;
+    List< Decl* >     *prototypeList;
+    List< VarDecl* >  *paramsList;
 }
 
 
@@ -85,9 +88,14 @@ void yyerror(char *msg); // standard error-handling routine
 %type <declList>  DeclList 
 %type <decl>      Decl
 %type <varType>   Type
-%type <varDecl>   VariableDecl
-%type <varDecl>   Variable
-%type <fnDecl>    FunctionDecl
+%type <varDecl>    VariableDecl
+%type <varDecl>    Variable
+%type <interfaceDecl> InterfaceDecl
+%type <decl> Prototype
+%type <prototypeList> PrototypeList
+%type <varDecl> Param
+%type <paramsList> ParamsList
+
 
 %%
 /* Rules
@@ -113,6 +121,7 @@ DeclList  :    DeclList Decl        { ($$=$1)->Append($2); }
           ;
 
 Decl      :    VariableDecl          { $$ = $1; }
+          |    InterfaceDecl         { $$ = $1; }
           ;
 
 VariableDecl  :  Variable ';' { $$ = $1; }
@@ -128,9 +137,40 @@ Type      :    T_Int          { $$ = Type::intType; }
           |    T_Double       { $$ = Type::doubleType; }
           |    T_Bool         { $$ = Type::voidType; }
           |    T_String       { $$ = Type::stringType; }
+          |    T_Void         { $$ = Type::voidType; }
+          |    T_Identifier   {
+                                Identifier *udfType = new Identifier(@1, $1);
+                                $$ = new NamedType(udfType);
+                              }
+          |    Type T_Dims    { $$ = new ArrayType(@1, $1); }
           ;
 
-FunctionDecl  : Type T_Identifier 
+InterfaceDecl : T_Interface T_Identifier '{' PrototypeList '}'  {
+                                              Identifier* interfaceName = new Identifier(@2, $2);
+                                              $$ = new InterfaceDecl(interfaceName, $4 );
+                                            }
+
+PrototypeList : PrototypeList Prototype     { ($$ = $1)->Append($2); }
+              | Prototype                   { ($$ = new List<Decl*>)->Append($1); }
+              | { $$ = new List<Decl*>(); }
+              ;
+
+Prototype : Type T_Identifier '(' ParamsList ')' ';'  {
+                                              Identifier *funcName = new Identifier(@2, $2);
+                                              $$ = new FnDecl(funcName, $1, $4);
+                                            }
+          ;
+
+
+ParamsList : ParamsList ',' Param        { ($$ = $1)->Append( $3 ); }
+           | Param                       { ($$ = new List<VarDecl*>())->Append($1); }
+           | { $$ = new List<VarDecl*>(); }
+           ;
+
+Param : Variable                 { $$ = $1; }
+      ;
+
+
 
 %%
 
