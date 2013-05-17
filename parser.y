@@ -85,19 +85,17 @@ void yyerror(char *msg); // standard error-handling routine
  * of the union named "declList" which is of type List<Decl*>.
  * pp2: You'll need to add many of these of your own.
  */
-%type <declList>  DeclList 
-%type <decl>      Decl
-%type <varType>   Type
-%type <varDecl>    VariableDecl
-%type <varDecl>    Variable
+%type <declList>      DeclList 
+%type <decl>          Decl
+%type <varType>       Type
+%type <varDecl>       VariableDecl
+%type <varDecl>       Variable
 %type <interfaceDecl> InterfaceDecl
 %type <decl> Prototype
 %type <prototypeList> PrototypeList
 %type <varDecl> Param
 %type <paramsList> ParamsList
-%type <paramsList> AParam
 
-%type <prototypeList> Q
 
 
 %%
@@ -105,7 +103,7 @@ void yyerror(char *msg); // standard error-handling routine
  * -----
  * All productions and actions should be placed between the start and stop
  * %% markers which delimit the Rules section.
-	 
+   
  */
 Program   :    DeclList            { 
                                       @1; 
@@ -154,13 +152,9 @@ InterfaceDecl : T_Interface T_Identifier '{' PrototypeList '}' {
                                             }
               ;
 
-PrototypeList : Q             { $$ = $1; }
+PrototypeList : Prototype PrototypeList     { ($$ = $2)->InsertAt($1, 0); }
+              |                             { $$ = new List< Decl* >(); }
               ;
-
-Q : Prototype Q               { ($$ = $2)->InsertAt($1, 0); }
-  |                           { $$ = new List< Decl* >(); }
-  ;
-
 
 Prototype : Type T_Identifier '(' ParamsList ')' ';' {
                                               Identifier *funcName = new Identifier(@2, $2);
@@ -168,13 +162,10 @@ Prototype : Type T_Identifier '(' ParamsList ')' ';' {
                                             }
           ;
 
-ParamsList : Param AParam                   { ($$ = $2)->InsertAt($1, 0); }
-          | AParam                          { $$ = $1; }
-          ;
-
-AParam : ',' Param AParam                   { ($$ = $3)->InsertAt($2, 0); }
-       |                                    { $$ = new List< VarDecl* >(); } 
-       ;
+ParamsList : Param ',' ParamsList           { ($$ = $3)->InsertAt($1, 0); }
+           | Param                          { ($$ = new List< VarDecl* >())->InsertAt($1, 0); }
+           |                                { $$ = new List< VarDecl* >(); }
+           ;
 
 Param : Variable              { $$ = $1; }
       ;
