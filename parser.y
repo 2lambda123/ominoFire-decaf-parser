@@ -46,12 +46,18 @@ void yyerror(char *msg); // standard error-handling routine
     char           identifier[MaxIdentLen+1]; // +1 for terminating null
     Decl*          decl;
     FnDecl*        fnDecl;
-    List< Decl* >*     declList;
-    Type*              varType;
-    VarDecl*           varDecl;
-    InterfaceDecl*     interfaceDecl;
-    List< Decl* >*     prototypeList;
-    List< VarDecl* >*  paramsList;
+    List< Decl* >*      declList;
+    Type*               varType;
+    VarDecl*            varDecl;
+    InterfaceDecl*      interfaceDecl;
+    List< Decl* >*      prototypeList;
+    List< VarDecl* >*   varDeclList;
+    StmtBlock*          stmtBlock;
+    Stmt*               stmt;
+    List< Stmt* >*      stmtList;
+    Expr*               expr;
+    List< Expr* >*      exprList;
+    Call*               call;
 }
 
 
@@ -91,11 +97,28 @@ void yyerror(char *msg); // standard error-handling routine
 %type <varDecl>       VariableDecl
 %type <varDecl>       Variable
 %type <interfaceDecl> InterfaceDecl
-%type <decl> Prototype
+%type <decl>          Prototype
 %type <prototypeList> PrototypeList
-%type <varDecl> Param
-%type <paramsList> ParamsList
-       %type <paramsList> AParam
+%type <varDecl>       Param
+%type <varDeclList>   ParamsList
+%type <varDeclList>   AParam
+%type <fnDecl>        FunctionDecl
+%type <stmtBlock>     StmtBlock
+%type <varDeclList>   VariableDeclList
+%type <stmtList>      StmtList
+%type <stmt>          Stmt
+%type <expr>          Expr
+%type <expr>          Constant
+%type <expr>          LValue
+%type <call>          Call
+%type <exprList>      AExpr
+%type <exprList>      Actuals
+
+%nonassoc '='
+%right '!' UMINUS
+%left '+' '-'
+%left '*' '/' '%'
+%left '[' '.' /* eso creo, no estoy seguro */
 
 
 %%
@@ -105,6 +128,7 @@ void yyerror(char *msg); // standard error-handling routine
  * %% markers which delimit the Rules section.
    
  */
+
 Program   :    DeclList            { 
                                       @1; 
                                       /* pp2: The @1 is needed to convince 
@@ -124,6 +148,7 @@ DeclList  :    DeclList Decl        { ($$=$1)->Append($2); }
 
 Decl      :    VariableDecl          { $$ = $1; }
           |    InterfaceDecl         { $$ = $1; }
+          |    FunctionDecl          { $$ = $1; }
           ;
 
 VariableDecl  :  Variable ';' { $$ = $1; }
@@ -164,18 +189,92 @@ Prototype : Type T_Identifier '(' ParamsList ')' ';' {
                                             }
           ;
 
-ParamsList : Param AParam                   { ($$ = $2)->InsertAt($1, 0); }
-           |                                { $$ = new List< VarDecl* >(); }
+ParamsList : Param AParam     { ($$ = $2)->InsertAt($1, 0); }
+           |                  { $$ = new List< VarDecl* >(); }
            ;
 
-AParam : ',' Param AParam                   { ($$ = $3)->InsertAt($2, 0); }
-       |                                    { $$ = new List< VarDecl* >(); } 
+AParam : ',' Param AParam     { ($$ = $3)->InsertAt($2, 0); }
+       |                      { $$ = new List< VarDecl* >(); } 
        ;
 
 Param : Variable              { $$ = $1; }
       ;
 
+FunctionDecl  : Type T_Identifier '(' ParamsList ')' StmtBlock {
+                                              Identifier* functionName = new Identifier(@2, $2);
+                                              $$ = new FnDecl(functionName, $1, $4);
+                                              $$->SetFunctionBody($6);
+                                            }
+              ;
 
+StmtBlock : '{' VariableDeclList StmtList '}' {
+                                              $$ = new StmtBlock($2, $3);
+                                            }
+          ;
+
+
+
+VariableDeclList : VariableDecl VariableDeclList {
+                                              ($$ = $2)->InsertAt($1, 0); 
+                                            }
+                 |                          { $$ = new List< VarDecl* >(); }
+                 ;
+
+StmtList  : Stmt StmtList       { ($$ = $2)->InsertAt($1, 0); }
+          |                     { $$ = new List< Stmt* >(); }
+         ;
+
+Stmt : ';'                     { /* ? */ }
+     | Expr ';'                { $$ = $1; }
+     | T_Break ';'             { $$ = new BreakStmt(@1); }
+     ;
+
+Expr  : LValue '=' Expr           { $$ = new AssignExpr($1, new Operator(@2, "="), $3); }
+      | Constant                  { $$ = $1; }
+      | LValue                    { $$ = $1; }
+      | T_This                    { $$ = new This(@1); }
+      | Call                      { $$ = $1; }
+      | '(' Expr ')'              { $$ = $2; }
+      | Expr '+' Expr             { $$ = new ArithmeticExpr($1, new Operator(@2, "+"), $3); }
+      | Expr '-' Expr             { $$ = new ArithmeticExpr($1, new Operator(@2, "-"), $3); }
+      | Expr '*' Expr             { $$ = new ArithmeticExpr($1, new Operator(@2, "*"), $3); }
+      | Expr '/' Expr             { $$ = new ArithmeticExpr($1, new Operator(@2, "/"), $3); }
+      | Expr '%' Expr             { $$ = new ArithmeticExpr($1, new Operator(@2, "%"), $3); }
+      | '-' Expr  %prec UMINUS    { $$ = new ArithmeticExpr(new Operator(@1, "-"), $2); }
+      | T_ReadInteger '(' ')'     { $$ = new ReadIntegerExpr(@1); }
+      | T_ReadLine '(' ')'        { $$ = new ReadLineExpr(@1); }
+      | T_New '(' T_Identifier ')' { 
+                                    NamedType* newt = new NamedType(new Identifier(@3, $3));
+                                    $$ = new NewExpr(@1, newt);
+                                  }
+      | T_NewArray '(' Expr ',' Type ')' { $$ = new NewArrayExpr(@1, $3, $5);  }
+      ;
+
+LValue  : T_Identifier           { $$ = new FieldAccess(NULL, new Identifier(@1, $1)); }
+        | Expr '.' T_Identifier  { $$ = new FieldAccess($1, new Identifier(@3, $3)); }
+        | Expr '[' Expr ']'      { $$ = new ArrayAccess(@1, $1, $3); }
+
+Constant  : T_IntConstant         { $$ = new IntConstant(@1, $1); }
+          | T_DoubleConstant      { $$ = new DoubleConstant(@1, $1); }
+          | T_BoolConstant        { $$ = new BoolConstant(@1, $1); }
+          | T_StringConstant      { $$ = new StringConstant(@1, $1); }
+          | T_Null                { $$ = new NullConstant(@1); }
+
+Call  : T_Identifier '(' Actuals ')' {
+                                    $$ = new Call(@1, NULL, new Identifier(@1, $1), $3);
+                                  }
+      | Expr '.' T_Identifier '(' Actuals ')' {
+                                    $$ = new Call(@1, $1, new Identifier(@3, $3), $5);
+                                  }
+      ;
+
+Actuals : Expr AExpr              { ($$ = $2)->InsertAt($1, 0); }
+        |                         { $$ = new List< Expr* >(); }
+        ;
+
+AExpr   : ',' Expr AExpr          { ($$ = $3)->InsertAt($2, 0); }
+        |                         { $$ = new List< Expr* >(); }
+        ;
 
 %%
 

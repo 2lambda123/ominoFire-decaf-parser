@@ -1,0 +1,30 @@
+int uno;
+int[] dos;
+int tres; void cosa(int a, int b, int c)
+{
+	break;
+	break;
+	break;
+}
+
+fer func()
+{
+	break;
+}
+
+bool todo()
+{
+	true;
+	false;
+	133209;
+	33.192;
+	"ola k ase";
+}
+
+int choque(int a)
+{
+	ReadLine();
+	ReadInteger();
+	1 + 3;
+}
+
