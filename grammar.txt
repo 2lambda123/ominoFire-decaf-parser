@@ -58,7 +58,10 @@ Field ::= VariableDecl | FunctionDecl
 IfStmt ::= if ( Expr ) Stmt <else Stmt>
 WhileStmt ::= while ( Expr ) Stmt
 ForStmt ::= for ( <Expr>; Expr ; <Expr>) Stmt
-ReturnStmt ::= return < Expr > ;
+
+ReturnStmt 	: 'return' Expr ';'
+						| 'return' ';'
+						
 BreakStmt ::= break ;
 PrintStmt ::= Print ( Expr+ , ) ;
 Expr ::= LValue = Expr 
@@ -66,8 +69,28 @@ Expr ::= LValue = Expr
 					| LValue 
 					| this 
 					| Call 
-					| ( Expr ) | Expr + Expr | Expr - Expr | Expr * Expr | Expr / Expr | Expr % Expr | - Expr | Expr < Expr | Expr <= Expr | Expr > Expr | Expr >= Expr | Expr == Expr | Expr ! = Expr | Expr && Expr | Expr || Expr | ! Expr | ReadInteger ( ) | ReadLine ( ) | New ( ident ) | NewArray ( Expr , Type )
+					| ( Expr ) 
+					| Expr + Expr 
+					| Expr - Expr 
+					| Expr * Expr 
+					| Expr / Expr 
+					| Expr % Expr 
+					| - Expr 
+					| Expr < Expr 
+					| Expr <= Expr 
+					| Expr > Expr 
+					| Expr >= Expr 
+					| Expr == Expr 
+					| Expr != Expr 
+					| Expr && Expr 
+					| Expr || Expr 
+					| ! Expr 
+					| ReadInteger ( ) | ReadLine ( ) | New ( ident ) | NewArray ( Expr , Type )
 LValue ::= ident | Expr . ident | Expr [ Expr ]
 Call ::= ident ( Actuals ) | Expr . ident ( Actuals )
 Actuals ::= Expr+ , |
-Constant ::= intConstant | doubleConstant | boolConstant | stringConstant | null
+Constant 	: intConstant 
+					| doubleConstant
+					| boolConstant
+					| stringConstant
+					| null

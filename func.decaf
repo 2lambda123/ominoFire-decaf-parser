@@ -23,8 +23,12 @@ bool todo()
 
 int choque(int a)
 {
+	int c;
+	int z;
+
 	ReadLine();
 	ReadInteger();
-	1 + 3;
+	a = 1 + 3;
+	a = b + c;
 }
 
