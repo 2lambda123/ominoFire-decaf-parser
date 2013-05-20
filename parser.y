@@ -185,7 +185,7 @@ Variable  :    Type T_Identifier  {
 
 Type      :    T_Int          { $$ = Type::intType; }
           |    T_Double       { $$ = Type::doubleType; }
-          |    T_Bool         { $$ = Type::voidType; }
+          |    T_Bool         { $$ = Type::boolType; }
           |    T_String       { $$ = Type::stringType; }
           |    T_Void         { $$ = Type::voidType; }
           |    T_Identifier   {
@@ -280,8 +280,8 @@ StmtBlock : '{' VariableDeclList StmtList '}' {
                                             }
           ;
 
-VariableDeclList : VariableDecl VariableDeclList {
-                                              ($$ = $2)->InsertAt($1, 0); 
+VariableDeclList : VariableDeclList VariableDecl {
+                                              ($$ = $1)->Append($2); 
                                             }
                  |                          { $$ = new List< VarDecl* >(); }
                  ;
@@ -302,19 +302,19 @@ Stmt  : ';'                     { /* ? */ }
       ;
 
 /* Dangling-else in our LALR: jUST rELAX */
-IfStmt  : T_If '(' Expr ')' Stmt              { $$ = new IfStmt($3, $5, NULL); } /* TODO: Checar si está bien */
+IfStmt  : T_If '(' Expr ')' Stmt              { $$ = new IfStmt($3, $5, NULL); }
         | T_If '(' Expr ')' Stmt T_Else Stmt  { $$ = new IfStmt($3, $5, $7); }
 
 WhileStmt : T_While '(' Expr ')' Stmt { $$ = new WhileStmt($3, $5); }
 
 ForStmt   : T_For '(' Expr ';' Expr ';' Expr ')' Stmt { $$ = new ForStmt($3, $5, $7, $9); }
-          | T_For '(' Expr ';' Expr ';' ')' Stmt      { $$ = new ForStmt($3, $5, NULL, $8); }
-          | T_For '(' ';' Expr ';' Expr ')' Stmt      { $$ = new ForStmt(NULL, $4, $6, $8); }
-          | T_For '(' ';' Expr ';' ')' Stmt           { $$ = new ForStmt(NULL, $4, NULL, $7); }
+          | T_For '(' Expr ';' Expr ';' ')' Stmt      { $$ = new ForStmt($3, $5, new EmptyExpr(), $8); }
+          | T_For '(' ';' Expr ';' Expr ')' Stmt      { $$ = new ForStmt(new EmptyExpr(), $4, $6, $8); }
+          | T_For '(' ';' Expr ';' ')' Stmt           { $$ = new ForStmt(new EmptyExpr(), $4, new EmptyExpr(), $7); }
 
 
 ReturnStmt  : T_Return Expr ';' { $$ = new ReturnStmt(@1, $2); }
-            | T_Return ';'      { $$ = new ReturnStmt(@1, NULL); } /* TODO:checar si es correcto */
+            | T_Return ';'      { $$ = new ReturnStmt(@1, new EmptyExpr()); } 
             ;
 
 PrintStmt   : T_Print '(' PrintList ')' ';' { $$ = new PrintStmt($3); }
@@ -344,7 +344,7 @@ Expr  : LValue '=' Expr           { $$ = new AssignExpr($1, new Operator(@2, "="
       | Expr T_NotEqual Expr      { $$ = new EqualityExpr($1, new Operator(@2, "!="), $3); }
       | Expr T_And Expr           { $$ = new LogicalExpr($1, new Operator(@2, "&&"), $3); }
       | Expr T_Or Expr            { $$ = new LogicalExpr($1, new Operator(@2, "||"), $3); }
-      | '!' Expr                  { $$ = new LogicalExpr(new Operator(@1, "||"), $2); }
+      | '!' Expr                  { $$ = new LogicalExpr(new Operator(@1, "!"), $2); }
       | T_ReadInteger '(' ')'     { $$ = new ReadIntegerExpr(@1); }
       | T_ReadLine '(' ')'        { $$ = new ReadLineExpr(@1); }
       | T_New '(' T_Identifier ')' { 
@@ -406,5 +406,5 @@ AExpr   : ',' Expr AExpr          { ($$ = $3)->InsertAt($2, 0); }
 void InitParser()
 {
    PrintDebug("parser", "Initializing parser");
-   yydebug = true;
+   yydebug = false  ;
 }

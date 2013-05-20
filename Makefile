@@ -86,5 +86,4 @@ depend:
 	makedepend -- $(CFLAGS) -- $(SRCS)
 
 clean:
-	rm -f $(JUNK) y.output $(PRODUCTS)
-
+	rm -f $(JUNK) y.output $(PRODUCTS) samples/*.run samples/*.diff samples/dcc

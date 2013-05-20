@@ -56,12 +56,12 @@ ClassDecl ::= class ident <extends ident> <implements ident+ ,> { Field∗ }
 Field ::= VariableDecl | FunctionDecl
 
 IfStmt ::= if ( Expr ) Stmt <else Stmt>
-WhileStmt ::= while ( Expr ) Stmt
+WhileStmt  while ( Expr ) Stmt
 ForStmt ::= for ( <Expr>; Expr ; <Expr>) Stmt
 
 ReturnStmt 	: 'return' Expr ';'
 						| 'return' ';'
-						
+
 BreakStmt ::= break ;
 PrintStmt ::= Print ( Expr+ , ) ;
 Expr ::= LValue = Expr 
